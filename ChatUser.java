@@ -1,6 +1,6 @@
 import java.nio.channels.*;
 
-enum States { INIT, OUTSIDE, INSIDE }
+enum State { INIT, OUTSIDE, INSIDE }
 
 public class ChatUser {
 	private ChatRoom room;
@@ -30,35 +30,26 @@ public class ChatUser {
   	}
 
 	/***** SETTERS *****/
-
-	// Nome
 	public void setUsername(String username) { 
 		this.username = username; 
 	}
-	// Estado
 	public void setState(State state) { 
 		this.state = state; 
 	}
-	// Sala
 	public void setRoom(ChatRoom room) { 
 		this.room = room; 
 	}
 	
 	/***** GETTERS *****/
-	
-	// Nome
 	public String getUsername() { 
 		return this.username; 
 	}
-	// Estado
 	public State getState() { 
 		return this.state; 
 	}
-	// Sala
 	public ChatRoom getRoom() { 
 		return this.room; 
 	}
-	// Socket
 	public SocketChannel getSocket() { 
 		return this.socket; 
 	}

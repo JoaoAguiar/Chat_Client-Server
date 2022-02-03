@@ -168,13 +168,7 @@ public class ChatServer {
         commandLeaveRoom(sender, socket_channel); 
       }
       else if(command.startsWith("bye")) { 
-        commandBye(socket_channel); 
-      }
-      else if(command.startsWith("priv")) {
-        String dest = subMessage.split(" ")[1];
-        String msg = subMessage.split(" ")[2];
-
-        commandPrivate(sender, socket_channel, dest, msg);
+        commandBye(sender, socket_channel); 
       }
       else { 
         clientSendMessage(sender, socket_channel, subMessage); 
@@ -186,47 +180,23 @@ public class ChatServer {
         clientSendMessage(sender, socket_channel, message); 
       }
       else { 
-        serverSendMessage(socket_channel, "ERROR\n"); 
+        String error_message = "ERROR_MESSAGE_OUTSIDE" + sender.getUsername() + "\n";
+        serverSendMessage(socket_channel, error_message); 
       }
     }
 
     return true;
   }
 
-  static private void commandPrivate(ChatUser sender, SocketChannel socket_channel, String dest, String msg) throws IOException {
-    dest = dest.replace("\n", "").replace("\r", "");
-    msg = msg.replace("\n", "").replace("\r", "");
-    
-    int i=0;    
-    String username = sender.getUsername();
-    ChatRoom cur = sender.getRoom();
-    ChatUser[] userList = cur.getUsers();
-    
-    for(ChatUser user : userList) {
-      if(user.getUsername().equals(dest)) {
-        String message = String.format("PRIVATE %s %s", username, msg);
-        SocketChannel socket_channel_output = user.getSocket();
-        message = message + "\n";
-        ByteBuffer bufferAux = encoder.encode(CharBuffer.wrap(message.toString()));
-        socket_channel_output.write(bufferAux);
-        serverSendMessage(socket_channel, "OK\n");
-        i = 1;
-      }
-    }
-
-    if(i == 0) { 
-      serverSendMessage(socket_channel, "ERROR\n"); 
-    }
-  }
-
   static private void commandNick(ChatUser sender, SocketChannel socket_channel, String nick) throws IOException {
     nick = nick.replace("\n", "").replace("\r", "");
       
     if(!userNAME.containsKey(nick)) {
-      if (sender.getState() == State.INIT) {
+      if(sender.getState() == State.INIT) {
           sender.setState(State.OUTSIDE);
           sender.setUsername(nick);
-          serverSendMessage(socket_channel, "OK\n");
+          String message = "NICK " + nick + '\n';
+          serverSendMessage(socket_channel, message);
       }
       else if(sender.getState() == State.INSIDE) {
         ChatRoom room = sender.getRoom();
@@ -244,8 +214,9 @@ public class ChatServer {
         sender.setUsername(nick);
       }
       else if(sender.getState() == State.OUTSIDE) {
+          String message = "NEWNICK " + sender.getUsername() + " " + nick + '\n';
           sender.setUsername(nick);
-          serverSendMessage(socket_channel, "OK\n");
+          serverSendMessage(socket_channel, message);
       }
     }
     else { 
@@ -264,10 +235,12 @@ public class ChatServer {
           entry.joinRoom(sender);
           sender.setRoom(entry);
           sender.setState(State.INSIDE);
-          serverSendMessage(socket_channel, "OK\n");
+
+          String message = "JOIN_ROOM " + sender.getUsername() + " " + room + "\n";
+          serverSendMessage(socket_channel, message);
           
           ChatUser[] userList = entry.getUsers();
-          String message = "JOINED " + sender.getUsername() +'\n';
+          message = "JOINED " + sender.getUsername() + room + "\n";
           
           for(ChatUser user : userList) {
             if(user != sender) {
@@ -280,7 +253,10 @@ public class ChatServer {
       else if(sender.getState() == State.INSIDE) {
         ChatRoom cur = sender.getRoom();
         ChatUser[] userList = cur.getUsers();
-        String message = "LEFT " + sender.getUsername() +'\n';
+
+        String message = "LEFT_JOIN_ROOM " + sender.getUsername() + " " + cur.getRoom() + " " + room + "\n";
+        serverSendMessage(socket_channel, message);
+        message = "LEFT " + sender.getUsername() +'\n';
         
         for(ChatUser user : userList) {
           if(user != sender){
@@ -305,8 +281,6 @@ public class ChatServer {
             socket_channel_output.write(bufferAux);
           }
         }
-
-        serverSendMessage(socket_channel, "OK\n");
       }
       else { 
         serverSendMessage(socket_channel, "ERROR\n"); 
@@ -320,9 +294,11 @@ public class ChatServer {
       
       leave.leaveRoom(sender);
       sender.setState(State.OUTSIDE);
-      serverSendMessage(socket_channel, "OK\n");
+
+      String message = "LEFT_ROOM " + username + " " + sender.getRoom() + "\n";
+      serverSendMessage(socket_channel, message);
       
-      String message = "LEFT " + username + '\n';
+      message = "LEFT " + username + '\n';
       ChatUser[] userList = leave.getUsers();
 
       for(ChatUser user : userList) {
@@ -332,12 +308,14 @@ public class ChatServer {
       }
     }
     else { 
-      serverSendMessage(socket_channel, "ERROR\n"); 
+      String message = "ERROR_NO_ROOM " + sender.getUsername() + "\n";
+      serverSendMessage(socket_channel, message); 
     }
   }
 
-  static private void commandBye(SocketChannel socket_channel) throws IOException {
-      serverSendMessage(socket_channel, "BYE\n");
+  static private void commandBye(ChatUser sender, SocketChannel socket_channel) throws IOException {
+      String message = "BYE" + sender.getUsername() + "\n";
+      serverSendMessage(socket_channel, message);
       socket_channel.close();
   }
 }

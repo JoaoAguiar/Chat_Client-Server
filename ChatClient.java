@@ -9,7 +9,7 @@ import java.nio.charset.*;
 
 public class ChatClient {
     // Variaveis relaticas GUI
-    JFrame frame = new JFrame("Chat Client");
+    JFrame frame = new JFrame("Chat");
     private JTextField chatBox = new JTextField();
     private JTextArea chatArea = new JTextArea();
 
@@ -20,7 +20,41 @@ public class ChatClient {
     private SocketChannel socketChannel;
 
     // Metodo usado para adicionar uma string à caixa de texto
-    public void printMessage(final String message) {
+    public void printMessage(String message) {
+        //Mensagem a dizer que mudou o nome!!!
+        message = message.replace("\n", "");
+        String[] tokens = message.split(" ");
+        
+        if(tokens[0].equals("NICK")) {
+            message = "User tem novo nick: " + tokens[1] + "\n";
+        }
+        else if(tokens[0].equals("NEWNICK")) {
+            message = tokens[1] + " mudou o nick para " + tokens[2] + "\n";
+        }
+        else if(tokens[0].equals("BYE")) {
+            message = tokens[1] + " saiu do chat\n";
+        }
+        else if(tokens[0].equals("ERROR_MESSAGE_OUTSIDE")) {
+            message = tokens[1] + " nao consegue enviar mensagem porque esta fora de um grupo\n";
+        }
+        else if(tokens[0].equals("JOIN_ROOM")) {
+            message = tokens[1] + " entras-te numa sala (" + tokens[2] + ")\n";
+        }
+        else if(tokens[0].equals("LEFT_JOIN_ROOM")) {
+            message = tokens[1] + " saiu da sala " + tokens[2] + " e entrou na sala " + tokens[3] + "\n";
+        }
+        else if(tokens[0].equals("LEFT_ROOM")) {
+            message = tokens[1] + " saiu da sala " + tokens[2] + "\n";
+        }
+        else if(tokens[0].equals("ERROR")) {
+            message = "ERRO\n";
+        }
+        else if(tokens[0].equals("ERROR_NO_ROOM")) {
+            message = tokens[1] + " nao esta em nenhum sala\n";
+        }
+        
+        System.out.print("Printing in chat box: " + message);
+        
         chatArea.append(message);
     }
 
@@ -71,11 +105,13 @@ public class ChatClient {
       BufferedReader input = new BufferedReader(new InputStreamReader(socketChannel.socket().getInputStream()));
 
       while(true) {
-        String message = input.readLine() + '\n';
+        String message = input.readLine();
 
         if(message == null) {
             break;
         }
+
+        message = message + '\n';
 
         // Escreve a mensagem no chat
         printMessage(message);
